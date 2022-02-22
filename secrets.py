@@ -9,7 +9,7 @@ from config import project_name, username, password,iam_endpoint
 #post url to generate IAM
 get_token_url="https://"+iam_endpoint+"/v3/auth/tokens"
 
-
+# json body
 get_token_post_json = {
     "auth": {
         "identity": {
