@@ -3,7 +3,7 @@ import requests
 import json
 from config import imageid,availability_zone,vpcid,sgid,subnetid,project_id, ecs_endpoint,sshkeyname
 import argparse
-from tokeng42 import *
+from secrets import get_token
 import random
 import string
 
@@ -73,7 +73,7 @@ del_ecs_json  = {
 
 
 def query_ecs_list():
-    token = get_token(get_token_post_json)
+    token = get_token()
     params= {"offset":1,"limit":100}
     if token:
         r=requests.get(query_ecs_list_url,params=params,headers={'content-type': 'application/json','X-Auth-Token':token})
@@ -89,7 +89,7 @@ def del_ecs(ecs_name):
     ecs_list = query_ecs_list()
     id = find_ecs_id(ecs_name,ecs_list)
     if id != "error":
-        token = return_if_valid_token()
+        token = get_token()
         del_ecs_json["servers"][0]["id"] = id
         if token:
             print("deleting",ecs_name,id)
@@ -107,7 +107,7 @@ def find_ecs_id(ecs_name,ecs_list):
             return "error"
 
 def create_ecs(vmname,flavour):
-    token = return_if_valid_token()
+    token = get_token()
     if token != "error":
         ecs_config["server"]["name"]=vmname
         ecs_config['server']['flavorRef']=flavour
