@@ -13,4 +13,4 @@ python3 ecs.py --create <vmname> --flavour <flavourname>
 
 2. Delet a VM 
 
-python3 ecs.py --delete <vmname>
+python3 ecs.py --delete <vmname> 
