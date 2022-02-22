@@ -1,11 +1,9 @@
-# cloudomatic
+# python code to provision resources on g42cloud, this uses the rest APIs to manage cloud resources 
 
-# python code to provision resources on g42cloud.com, this uses the rest APIs to manage cloud resources 
-
-# Deployement
+# Deployment
 python 3 , install in a venv and pip install the moudles required 
 
-# python modules required
+# modules required
 
 requests
 
