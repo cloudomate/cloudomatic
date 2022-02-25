@@ -1,7 +1,7 @@
 # coding=utf-8
 import requests
 import json
-from config import imageid,availability_zone,vpcid,sgid,subnetid,project_id, ecs_endpoint,sshkeyname
+from config import availability_zone,vpcid,sgid,subnetid,project_id, ecs_endpoint,sshkeyname, adminpass, ubuntu_imageid, windows_imageid, centos_imageid
 import argparse
 from secrets import get_token
 import random
@@ -28,7 +28,7 @@ ecs_config = {
     "server": {
         "availability_zone":availability_zone,
         "name": "rancher-test", 
-        "imageRef": imageid, 
+        "imageRef": ubuntu_imageid, 
         "root_volume": {
             "volumetype": "SAS"
         }, 
@@ -50,7 +50,8 @@ ecs_config = {
                 "subnet_id": subnetid
             }
         ], 
-        "key_name": sshkeyname, 
+        "key_name": sshkeyname,
+        "adminPass": adminpass,
         "count": 1, 
         "server_tags": [
             {
@@ -106,11 +107,12 @@ def find_ecs_id(ecs_name,ecs_list):
         else:
             return "error"
 
-def create_ecs(vmname,flavour):
+def create_ecs(vmname,flavour,imageid):
     token = get_token()
     if token != "error":
         ecs_config["server"]["name"]=vmname
         ecs_config['server']['flavorRef']=flavour
+        ecs_config['server']['imageRef']=imageid
         r=requests.post(create_ecs_url,data=json.dumps(ecs_config),headers={'content-type': 'application/json','X-Auth-Token':token})
         if r.status_code == 201:
             print(r.content)
@@ -120,13 +122,21 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Description of your program')
     parser.add_argument('-c','--create', help='Create ECS')
     parser.add_argument('-f','--flavour', help='ECS flaour', nargs='?', default="s6.large.2")
+    parser.add_argument('-o','--os', help="OS")
     parser.add_argument('-d','--delete', help='Delete ECS')
     parser.add_argument('-l','--list',help="get ECS list",action='store_true')
     args = parser.parse_args()
 
     if (args.create):
         print('creating vm with name',args.create)
-        create_ecs(args.create,args.flavour)
+        if args.os:
+            if args.os == "windows":
+                imageid = windows_imageid
+            elif args.os == "ubuntu":
+                imageid = ubuntu_imageid
+            elif args.os == "centos":
+                imageid = centos_imageid
+            create_ecs(args.create,args.flavour,imageid)
     elif (args.delete):
         print('deleting vm with name',args.delete)
         del_ecs(args.delete)
