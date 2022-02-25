@@ -1,12 +1,13 @@
 # coding=utf-8
 import requests
 import json
-from config import availability_zone,vpcid,sgid,subnetid,project_id, ecs_endpoint,sshkeyname, adminpass, ubuntu_imageid, windows_imageid, centos_imageid
+from config import availability_zone,vpcid,sgid,subnetid,project_id_dict, ecs_endpoint,sshkeyname, adminpass, ubuntu_imageid, windows_imageid, centos_imageid
 import argparse
 from secrets import get_token
 import random
 import string
 
+project_id=project_id_dict["etisalat"]
 
 #post
 create_ecs_url="https://"+ecs_endpoint+"/v1/"+project_id+"/cloudservers"

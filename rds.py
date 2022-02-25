@@ -1,10 +1,11 @@
 # coding=utf-8
 import requests
 import json
-from config import dbname,dbuser,project_id,rds_instance_id
+from config import dbname,dbuser,project_id_dict,rds_instance_id
 import sys
 from secrets import get_token
 
+project_id=project_id_dict["etisalat"]
 
 #post
 create_db_url='https://rds.ae-ad-1.g42cloud.com/v3/'+project_id+'/instances/'+rds_instance_id+'/database'

@@ -2,12 +2,14 @@ import requests
 import json
 import time
 import os
-from config import project_name, username, password,iam_endpoint
+from config import project_name_dict, username, password,iam_endpoint
 
 # return if valid token, else get token and write to file toke.json = {'token': <token value, 'timestamp' : <unix time epoch in integer>}
 
 #post url to generate IAM
 get_token_url="https://"+iam_endpoint+"/v3/auth/tokens"
+
+project_name=project_name_dict["etisalat"]
 
 # json body
 get_token_post_json = {
