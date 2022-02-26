@@ -98,7 +98,7 @@ def query_ip_from_ecs(ecs_name):
             vpcid=list(ecs["addresses"].keys())[0]
             addr = ecs["addresses"][vpcid][0]['addr']
             return addr
-    return "vm does not exsist"
+    return False
 
 def del_ecs(ecs_name):
     ecs_list = query_ecs_list()
@@ -121,6 +121,10 @@ def find_ecs_id(ecs_name,ecs_list):
             return "error"
 
 def create_ecs(vmname,flavour,imageid):
+    ipaddr = query_ip_from_ecs(vmname)
+    if ipaddr:
+        print('already exsist')
+        return False
     token = get_token()
     if token != "error":
         ecs_config["server"]["name"]=vmname
