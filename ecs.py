@@ -15,8 +15,12 @@ create_ecs_url="https://"+ecs_endpoint+"/v1/"+project_id+"/cloudservers"
 #get
 query_ecs_list_url="https://"+ecs_endpoint+"/v1/"+project_id+'/cloudservers/detail'
 
+#get
+query_ecs_url="https://"+ecs_endpoint+"/v1/"+project_id+'/cloudservers/'
+
 #post
 del_ecs_url="https://"+ecs_endpoint+"/v1/"+project_id+'/cloudservers/delete'
+
 
 
 def get_random_string(length):
@@ -87,6 +91,15 @@ def query_ecs_list():
         print("token error")
         return "error"   
 
+def query_ip_from_ecs(ecs_name):
+    ecs_list = query_ecs_list()
+    for ecs in ecs_list["servers"]:
+        if ecs["name"]==ecs_name:
+            vpcid=list(ecs["addresses"].keys())[0]
+            addr = ecs["addresses"][vpcid][0]['addr']
+            return addr
+    return "vm does not exsist"
+
 def del_ecs(ecs_name):
     ecs_list = query_ecs_list()
     id = find_ecs_id(ecs_name,ecs_list)
@@ -96,7 +109,6 @@ def del_ecs(ecs_name):
         if token:
             print("deleting",ecs_name,id)
             r=requests.post(del_ecs_url,data=json.dumps(del_ecs_json),headers={'content-type': 'application/json','X-Auth-Token':token})
-            print(r.status_code,r.content)
     else:
         print("ecs does not exsist")
 
@@ -116,8 +128,9 @@ def create_ecs(vmname,flavour,imageid):
         ecs_config['server']['imageRef']=imageid
         r=requests.post(create_ecs_url,data=json.dumps(ecs_config),headers={'content-type': 'application/json','X-Auth-Token':token})
         if r.status_code == 201:
+            return r.json()["job_id"]
+        else:
             print(r.content)
-        print(r.content)
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Description of your program')
@@ -126,6 +139,7 @@ if __name__=='__main__':
     parser.add_argument('-o','--os', help="OS")
     parser.add_argument('-d','--delete', help='Delete ECS')
     parser.add_argument('-l','--list',help="get ECS list",action='store_true')
+    parser.add_argument('-a','--queryip',help="get ip addr of ECS" )
     args = parser.parse_args()
 
     if (args.create):
@@ -137,10 +151,14 @@ if __name__=='__main__':
                 imageid = ubuntu_imageid
             elif args.os == "centos":
                 imageid = centos_imageid
-            create_ecs(args.create,args.flavour,imageid)
+            # create_ecs(name,flaour, osimage)
+            job_id=create_ecs(args.create,args.flavour,imageid)
     elif (args.delete):
         print('deleting vm with name',args.delete)
         del_ecs(args.delete)
+    elif (args.queryip):
+        addr=query_ip_from_ecs(args.queryip)
+        print(addr)
     elif args.list:
         h = ['Name', 'OS', 'Flavour',"IPv4 Addr"]
         ecs_list=query_ecs_list()

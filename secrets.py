@@ -61,24 +61,19 @@ def return_if_valid_token(get_token_post_json=get_token_post_json):
             for token in data["tokens"]:
                 if token['projectname'] == get_token_post_json['auth']['scope']['project']['name']:
                     if time.time()-float(token['timestamp']) < 86400:
-                        print("token exsists in cache returning valid token from cache")
                         return token['token']
                     else:
-                        print("token expired generating a new one")
                         token=generate_token()
                         return token
-            print("local cache does not have token for project id , generating a new one")
             token=generate_token()
             return token
     else:
-        print("no token cache, generating a new one")
         token=generate_token()
         return token
 
 def write_update_token(token_data):
     if os.path.isfile('token.json'):
         with open("token.json","r+") as f:
-            print(token_data)
             data = json.load(f)
             if len(data["tokens"]) > 1:
                 for token in data["tokens"]:
