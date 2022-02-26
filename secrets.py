@@ -74,6 +74,7 @@ def return_if_valid_token(get_token_post_json=get_token_post_json):
 def write_update_token(token_data):
     if os.path.isfile('token.json'):
         with open("token.json","r+") as f:
+            f.seek(0)
             data = json.load(f)
             if len(data["tokens"]) > 1:
                 for token in data["tokens"]:
