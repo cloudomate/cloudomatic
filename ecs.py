@@ -6,6 +6,9 @@ import argparse
 from secrets import get_token
 import random
 import string
+import time
+
+pos_codes = [200,201,202]
 
 project_id=project_id_dict["etisalat"]
 
@@ -21,7 +24,8 @@ query_ecs_url="https://"+ecs_endpoint+"/v1/"+project_id+'/cloudservers/'
 #post
 del_ecs_url="https://"+ecs_endpoint+"/v1/"+project_id+'/cloudservers/delete'
 
-
+#get task 
+query_task_url="https://"+ecs_endpoint+"/v1/"+project_id+"/jobs/"
 
 def get_random_string(length):
     # choose from all lowercase letter
@@ -77,6 +81,23 @@ del_ecs_json  = {
     "delete_volume": True
    }
 
+def query_task_status(job_id):
+    token = get_token()
+    url=query_task_url+job_id
+    if token:
+        r=requests.get(url,headers={'content-type': 'application/json','X-Auth-Token':token})
+        if r.status_code in pos_codes:
+            if r.json()["status"] == "SUCCESS":
+                return "SUCCESS"
+
+def wait_for_task(job_id):
+    while True:
+        status=query_task_status(job_id)
+        if status == "SUCCESS":
+            print("success")
+            break
+        time.sleep(15)
+
 
 def query_ecs_list():
     token = get_token()
@@ -131,7 +152,7 @@ def create_ecs(vmname,flavour,imageid):
         ecs_config['server']['flavorRef']=flavour
         ecs_config['server']['imageRef']=imageid
         r=requests.post(create_ecs_url,data=json.dumps(ecs_config),headers={'content-type': 'application/json','X-Auth-Token':token})
-        if r.status_code == 201:
+        if r.status_code in pos_codes:
             return r.json()["job_id"]
         else:
             print(r.content)
@@ -139,6 +160,7 @@ def create_ecs(vmname,flavour,imageid):
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Description of your program')
     parser.add_argument('-c','--create', help='Create ECS')
+    parser.add_argument("--wait",action="store_true")
     parser.add_argument('-f','--flavour', help='ECS flaour', nargs='?', default="s6.large.2")
     parser.add_argument('-o','--os', help="OS")
     parser.add_argument('-d','--delete', help='Delete ECS')
@@ -156,7 +178,11 @@ if __name__=='__main__':
             elif args.os == "centos":
                 imageid = centos_imageid
             # create_ecs(name,flaour, osimage)
-            job_id=create_ecs(args.create,args.flavour,imageid)
+            if args.wait== True:
+                job_id=create_ecs(args.create,args.flavour,imageid)
+                wait_for_task(job_id)
+            else:
+                job_id=create_ecs(args.create,args.flavour,imageid)
     elif (args.delete):
         print('deleting vm with name',args.delete)
         del_ecs(args.delete)
