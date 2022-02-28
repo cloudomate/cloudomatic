@@ -7,6 +7,9 @@ from secrets import get_token
 import random
 import string
 import time
+import base64
+
+
 
 pos_codes = [200,201,202]
 
@@ -59,7 +62,8 @@ ecs_config = {
                 "subnet_id": subnetid
             }
         ], 
-        "key_name": sshkeyname,
+        "user_data": "",
+        "key_name": "",
         "adminPass": adminpass,
         "count": 1, 
         "server_tags": [
@@ -80,6 +84,14 @@ del_ecs_json  = {
     "delete_publicip": True, 
     "delete_volume": True
    }
+
+def read_file_data_get_base64(p):
+    f=open(p)
+    d=f.read()
+    f.close()
+    message_bytes = d.encode('ascii')
+    userdata_base64_bytes = base64.b64encode(message_bytes)
+    return userdata_base64_bytes
 
 def query_task_status(job_id):
     token = get_token()
@@ -141,16 +153,13 @@ def find_ecs_id(ecs_name,ecs_list):
         else:
             return "error"
 
-def create_ecs(vmname,flavour,imageid):
-    ipaddr = query_ip_from_ecs(vmname)
+def create_ecs():
+    ipaddr = query_ip_from_ecs(ecs_config["server"]["name"])
     if ipaddr:
         print('already exsist')
         return False
     token = get_token()
     if token != "error":
-        ecs_config["server"]["name"]=vmname
-        ecs_config['server']['flavorRef']=flavour
-        ecs_config['server']['imageRef']=imageid
         r=requests.post(create_ecs_url,data=json.dumps(ecs_config),headers={'content-type': 'application/json','X-Auth-Token':token})
         if r.status_code in pos_codes:
             return r.json()["job_id"]
@@ -166,23 +175,29 @@ if __name__=='__main__':
     parser.add_argument('-d','--delete', help='Delete ECS')
     parser.add_argument('-l','--list',help="get ECS list",action='store_true')
     parser.add_argument('-a','--queryip',help="get ip addr of ECS" )
+    parser.add_argument('-u','--user-data',help="user data for ECS" )
     args = parser.parse_args()
 
     if (args.create):
         print('creating vm with name',args.create)
+        ecs_config["server"]["name"] = args.create
+        ecs_config["server"]["key_name"] = sshkeyname
         if args.os:
             if args.os == "windows":
-                imageid = windows_imageid
+                ecs_config["server"]["imageRef"] = windows_imageid
+                ecs_config["server"]["key_name"] = ""
             elif args.os == "ubuntu":
-                imageid = ubuntu_imageid
+                ecs_config["server"]["imageRef"] = ubuntu_imageid
             elif args.os == "centos":
-                imageid = centos_imageid
+                ecs_config["server"]["imageRef"] = centos_imageid
             # create_ecs(name,flaour, osimage)
+            elif args.u:
+                ecs_config["server"]["user_data"] = read_file_data_get_base64(args.u)
             if args.wait== True:
-                job_id=create_ecs(args.create,args.flavour,imageid)
+                job_id=create_ecs()
                 wait_for_task(job_id)
             else:
-                job_id=create_ecs(args.create,args.flavour,imageid)
+                job_id=create_ecs()
     elif (args.delete):
         print('deleting vm with name',args.delete)
         del_ecs(args.delete)
